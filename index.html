@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5をつくろう！</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Hiragino Maru Gothic ProN', 'Meiryo', sans-serif;
+        text-align: center;
+        background-color: #f0f8ff;
+        color: #333;
+        margin: 0;
+        padding: 20px;
+        overflow-x: hidden;
+        min-height: 100vh;
+    }
+    h1 {
+        color: #ff8c00;
+        font-size: 32px;
+        margin: 8px 0 20px;
+    }
+    .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 680px) 176px;
+        justify-content: center;
+        align-items: start;
+        gap: 16px;
+        max-width: 890px;
+        margin: 0 auto;
+    }
+    .game-area {
+        background-color: #ffffff;
+        border-radius: 20px;
+        padding: 28px 24px 32px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        position: relative;
+        min-width: 0;
+    }
+    .message {
+        font-size: 24px;
+        font-weight: bold;
+        color: #555;
+        margin-bottom: 12px;
+        min-height: 64px;
+    }
+    .frame-container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        width: fit-content;
+        margin: 24px auto 8px;
+        position: relative;
+        z-index: 1;
+        min-height: 80px;
+        transition: min-height 0.2s, margin 0.2s;
+    }
+    .frame-row {
+        display: flex;
+        justify-content: flex-start;
+        gap: 10px;
+    }
+    .box {
+        width: 80px;
+        height: 80px;
+        border: 4px solid #4caf50;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #e8f5e9;
+        transition: background-color 0.2s, transform 0.15s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .box.empty-hint {
+        background-color: #fff8e1;
+        border-color: #ffb300;
+    }
+    .box.shake,
+    .equation.shake {
+        animation: shake 0.45s ease-in-out;
+    }
+    .ball {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        box-shadow: inset -5px -5px 10px rgba(0,0,0,0.2);
+    }
+    .ball.landed {
+        animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .ball.flying,
+    .num-chip {
+        position: fixed;
+        margin: 0;
+        z-index: 1000;
+        pointer-events: none;
+        will-change: transform;
+    }
+    .num-chip {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background-color: #448aff;
+        color: #fff;
+        font-size: 32px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 12px rgba(68, 138, 255, 0.35);
+    }
+    .red { background-color: #ff5252; }
+    .blue { background-color: #448aff; }
+
+    .game-area.no-grid .box {
+        border-color: transparent;
+        background-color: transparent;
+    }
+    .game-area.no-grid .box.empty-hint {
+        background-color: transparent;
+    }
+    .game-area.no-balls .ball:not(.flying) {
+        visibility: hidden;
+    }
+    .game-area.no-balls .box:has(.red) {
+        background-color: #ffcdd2;
+        border-color: #e57373;
+    }
+    .game-area.no-balls .box:has(.blue) {
+        background-color: #bbdefb;
+        border-color: #64b5f6;
+    }
+    .game-area.no-grid.no-balls .box:has(.red),
+    .game-area.no-grid.no-balls .box:has(.blue) {
+        background-color: transparent;
+        border-color: transparent;
+        box-shadow: none;
+    }
+    .game-area.no-grid.no-balls .frame-container {
+        min-height: 0;
+        height: 0;
+        margin: 0;
+        overflow: hidden;
+        visibility: hidden;
+    }
+    .game-area.no-grid.no-balls .equation {
+        font-size: 64px;
+        min-height: 90px;
+        margin: 36px 0 20px;
+    }
+
+    @keyframes pop {
+        0% { transform: scale(0); }
+        100% { transform: scale(1); }
+    }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20% { transform: translateX(-8px) rotate(-2deg); }
+        40% { transform: translateX(8px) rotate(2deg); }
+        60% { transform: translateX(-6px); }
+        80% { transform: translateX(6px); }
+    }
+
+    .equation {
+        font-size: 42px;
+        font-weight: bold;
+        color: #ff4081;
+        margin: 12px 0 8px;
+        min-height: 56px;
+        letter-spacing: 4px;
+        transition: font-size 0.2s, margin 0.2s;
+    }
+    .eq-red { color: #ff5252; }
+    .eq-blue { color: #448aff; }
+    .eq-blank {
+        color: #90a4ae;
+        display: inline-block;
+        min-width: 0.9em;
+    }
+
+    .choices {
+        margin-top: 8px;
+    }
+    .choices-label {
+        font-size: 22px;
+        font-weight: bold;
+        color: #1565c0;
+        margin-bottom: 14px;
+    }
+    .choice-row {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        max-width: 430px;
+        margin: 0 auto;
+    }
+    .choice-btn {
+        width: 72px;
+        height: 72px;
+        border: none;
+        border-radius: 50%;
+        color: white;
+        font-size: 32px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 5px 0 rgba(0,0,0,0.18);
+        transition: transform 0.15s, filter 0.15s;
+    }
+    .choice-btn:hover:not(:disabled) {
+        transform: translateY(-3px);
+        filter: brightness(1.08);
+    }
+    .choice-btn:active:not(:disabled) {
+        transform: translateY(2px);
+        box-shadow: 0 2px 0 rgba(0,0,0,0.18);
+    }
+    .choice-btn:disabled {
+        cursor: default;
+        opacity: 0.55;
+    }
+    .choice-btn[data-count="1"], .tgt-btn[data-n="1"] { background-color: #42a5f5; }
+    .choice-btn[data-count="2"], .tgt-btn[data-n="2"] { background-color: #66bb6a; }
+    .choice-btn[data-count="3"], .tgt-btn[data-n="3"] { background-color: #ffa726; }
+    .choice-btn[data-count="4"], .tgt-btn[data-n="4"] { background-color: #ab47bc; }
+    .choice-btn[data-count="5"], .tgt-btn[data-n="5"] { background-color: #ef5350; }
+    .choice-btn[data-count="6"], .tgt-btn[data-n="6"] { background-color: #26c6da; }
+    .choice-btn[data-count="7"], .tgt-btn[data-n="7"] { background-color: #8d6e63; }
+    .choice-btn[data-count="8"], .tgt-btn[data-n="8"] { background-color: #ec407a; }
+    .choice-btn[data-count="9"], .tgt-btn[data-n="9"] { background-color: #7e57c2; }
+    .choice-btn[data-count="10"], .tgt-btn[data-n="10"] { background-color: #5c6bc0; }
+
+    .next-btn {
+        background-color: #ff9800;
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        font-size: 24px;
+        font-weight: bold;
+        border-radius: 30px;
+        cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        transition: all 0.2s;
+        margin-top: 8px;
+    }
+    .next-btn:hover {
+        background-color: #f57c00;
+        transform: translateY(-2px);
+    }
+    .next-btn:active {
+        transform: translateY(2px);
+        box-shadow: none;
+    }
+    .hidden {
+        display: none !important;
+    }
+
+    .controls {
+        background-color: #ffffff;
+        border-radius: 20px;
+        padding: 18px 14px 20px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        text-align: left;
+    }
+    .controls-title {
+        font-size: 15px;
+        font-weight: bold;
+        color: #546e7a;
+        margin: 0 0 14px;
+        text-align: center;
+        letter-spacing: 0.04em;
+    }
+    .ctrl-group {
+        margin-bottom: 18px;
+    }
+    .ctrl-group:last-child {
+        margin-bottom: 0;
+    }
+    .ctrl-label {
+        font-size: 18px;
+        font-weight: bold;
+        color: #37474f;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+    .ctrl-btns {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .ctrl-btn {
+        border: 2px solid #b0bec5;
+        background: #eceff1;
+        color: #455a64;
+        border-radius: 12px;
+        padding: 10px 8px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .ctrl-btn.active {
+        background: #1565c0;
+        border-color: #1565c0;
+        color: #fff;
+    }
+    .ctrl-btn:hover:not(.active):not(:disabled) {
+        background: #cfd8dc;
+    }
+    .ctrl-btn:disabled {
+        opacity: 0.45;
+        cursor: default;
+    }
+    .tgt-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+    .tgt-btn {
+        border: 2px solid transparent;
+        color: #fff;
+        border-radius: 10px;
+        padding: 8px 0;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        font-family: inherit;
+        opacity: 0.55;
+    }
+    .tgt-btn.active {
+        opacity: 1;
+        box-shadow: 0 0 0 2px #1565c0, 0 0 0 4px #fff;
+        transform: scale(1.06);
+    }
+    .tgt-btn:hover:not(.active) {
+        opacity: 0.85;
+    }
+
+    @media (max-width: 760px) {
+        .layout {
+            grid-template-columns: 1fr;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 16px;
+        }
+        .controls-title {
+            grid-column: 1 / -1;
+            margin-bottom: 4px;
+        }
+        .ctrl-group {
+            margin-bottom: 0;
+        }
+        .tgt-group {
+            grid-column: 1 / -1;
+        }
+    }
+</style>
+</head>
+<body>
+
+    <h1 id="game-title">🍎 5 を つくろう！ 🍏</h1>
+
+    <div class="layout">
+        <div class="game-area" id="game-area">
+            <div id="message" class="message">あかだま が あるよ。<br>あおだま は いくつ いるかな？</div>
+
+            <div class="frame-container" id="frames"></div>
+
+            <div id="equation" class="equation"></div>
+
+            <div id="choices" class="choices">
+                <div class="choices-label" id="choices-label">あおだま は いくつ？</div>
+                <div class="choice-row" id="choice-row"></div>
+            </div>
+
+            <button id="next-btn" class="next-btn hidden">つぎのもんだい！</button>
+        </div>
+
+        <aside class="controls" aria-label="表示のきりかえ">
+            <p class="controls-title">ステップアップ</p>
+            <div class="ctrl-group tgt-group">
+                <div class="ctrl-label">合計</div>
+                <div class="tgt-grid" id="target-grid"></div>
+            </div>
+            <div class="ctrl-group">
+                <div class="ctrl-label">格子</div>
+                <div class="ctrl-btns">
+                    <button type="button" class="ctrl-btn active" data-setting="grid" data-value="on">あり</button>
+                    <button type="button" class="ctrl-btn" data-setting="grid" data-value="off">なし</button>
+                </div>
+            </div>
+            <div class="ctrl-group">
+                <div class="ctrl-label">球</div>
+                <div class="ctrl-btns">
+                    <button type="button" class="ctrl-btn active" data-setting="balls" data-value="on">あり</button>
+                    <button type="button" class="ctrl-btn" data-setting="balls" data-value="off">なし</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+<script>
+    const gameArea = document.getElementById('game-area');
+    const framesContainer = document.getElementById('frames');
+    const messageEl = document.getElementById('message');
+    const equationEl = document.getElementById('equation');
+    const nextBtn = document.getElementById('next-btn');
+    const choicesEl = document.getElementById('choices');
+    const choicesLabel = document.getElementById('choices-label');
+    const choiceRow = document.getElementById('choice-row');
+
+    const gameTitle = document.getElementById('game-title');
+    const targetGrid = document.getElementById('target-grid');
+
+    let target = 5;
+    let redCount = 0;
+    let busy = false;
+    let solved = false;
+    let showGrid = true;
+    let showBalls = true;
+    let boxesInOrder = [];
+
+    function wait(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function emptyBoxes() {
+        return boxesInOrder.filter((box) => !box.querySelector('.ball'));
+    }
+
+    function clearBlueBalls() {
+        framesContainer.querySelectorAll('.ball.blue').forEach((ball) => ball.remove());
+        framesContainer.querySelectorAll('.box').forEach((box) => {
+            box.classList.remove('empty-hint', 'shake');
+        });
+    }
+
+    function setChoicesEnabled(enabled) {
+        choiceRow.querySelectorAll('.choice-btn').forEach((btn) => {
+            btn.disabled = !enabled;
+        });
+    }
+
+    function placeBlueBalls(count) {
+        emptyBoxes().slice(0, count).forEach((box) => {
+            const landed = document.createElement('div');
+            landed.className = 'ball blue landed';
+            box.appendChild(landed);
+        });
+    }
+
+    function applyDisplayMode() {
+        if (!showBalls) showGrid = false;
+        gameArea.classList.toggle('no-grid', !showGrid);
+        gameArea.classList.toggle('no-balls', !showBalls);
+        choicesLabel.textContent = showBalls ? 'あおだま は いくつ？' : 'いくつ たす？';
+        refreshEquation();
+        document.querySelectorAll('.ctrl-btn[data-setting]').forEach((btn) => {
+            const on = btn.dataset.setting === 'grid' ? showGrid : showBalls;
+            btn.classList.toggle('active', (btn.dataset.value === 'on') === on);
+            if (btn.dataset.setting === 'grid') btn.disabled = !showBalls;
+        });
+        document.querySelectorAll('.tgt-btn').forEach((btn) => {
+            btn.classList.toggle('active', Number(btn.dataset.n) === target);
+        });
+        gameTitle.textContent = `🍎 ${target} を つくろう！ 🍏`;
+        document.title = `${target}をつくろう！`;
+    }
+
+    function refreshEquation(blueValue = null) {
+        if (solved && blueValue === null) {
+            equationEl.innerHTML =
+                `<span class="eq-red">${redCount}</span> + <span class="eq-blue">${target - redCount}</span> = ${target}`;
+            return;
+        }
+        if (blueValue !== null) {
+            equationEl.innerHTML =
+                `<span class="eq-red">${redCount}</span> + <span class="eq-blue">${blueValue}</span> = ${redCount + blueValue}`;
+            return;
+        }
+        equationEl.innerHTML =
+            `<span class="eq-red">${redCount}</span> + <span class="eq-blank">□</span> = ${target}`;
+    }
+
+    function buildChoiceButtons() {
+        choiceRow.innerHTML = '';
+        for (let n = 1; n <= target; n++) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'choice-btn';
+            btn.dataset.count = String(n);
+            btn.textContent = String(n);
+            btn.setAttribute('aria-label', `${n}`);
+            btn.addEventListener('click', () => onChoose(n, btn));
+            choiceRow.appendChild(btn);
+        }
+    }
+
+    function buildTargetButtons() {
+        targetGrid.innerHTML = '';
+        for (let n = 2; n <= 10; n++) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'tgt-btn';
+            btn.dataset.n = String(n);
+            btn.textContent = String(n);
+            btn.addEventListener('click', () => {
+                if (target === n) return;
+                target = n;
+                buildChoiceButtons();
+                initGame();
+            });
+            targetGrid.appendChild(btn);
+        }
+    }
+
+    function promptMessage() {
+        if (showBalls) {
+            return `あか が <strong>${redCount}</strong> こ あるよ。<br>あお を いれて <strong>${target}</strong> に しよう！`;
+        }
+        return `<strong>${redCount}</strong> に いくつ たせば <strong>${target}</strong> になるかな？`;
+    }
+
+    function makeBox() {
+        const box = document.createElement('div');
+        box.className = 'box';
+        return box;
+    }
+
+    function buildFrames() {
+        framesContainer.innerHTML = '';
+        boxesInOrder = [];
+
+        const bottomCount = Math.min(5, target);
+        const topCount = Math.max(0, target - 5);
+        const bottomRow = document.createElement('div');
+        bottomRow.className = 'frame-row';
+        const topRow = document.createElement('div');
+        topRow.className = 'frame-row';
+
+        for (let i = 0; i < bottomCount; i++) {
+            const box = makeBox();
+            bottomRow.appendChild(box);
+            boxesInOrder.push(box);
+        }
+        for (let i = 0; i < topCount; i++) {
+            const box = makeBox();
+            topRow.appendChild(box);
+            boxesInOrder.push(box);
+        }
+
+        if (topCount > 0) framesContainer.appendChild(topRow);
+        framesContainer.appendChild(bottomRow);
+
+        boxesInOrder.forEach((box, i) => {
+            if (i < redCount) {
+                const ball = document.createElement('div');
+                ball.className = 'ball red';
+                box.appendChild(ball);
+            }
+        });
+    }
+
+    function initGame() {
+        busy = false;
+        solved = false;
+        redCount = Math.floor(Math.random() * (target - 1)) + 1;
+
+        messageEl.innerHTML = promptMessage();
+        nextBtn.classList.add('hidden');
+        choicesEl.classList.remove('hidden');
+        setChoicesEnabled(true);
+        buildFrames();
+        applyDisplayMode();
+    }
+
+    function spawnFlyingBall(fromEl, index, total) {
+        const rect = fromEl.getBoundingClientRect();
+        const ball = document.createElement('div');
+        ball.className = 'ball blue flying';
+        const offsetX = (index - (total - 1) / 2) * 14;
+        ball.style.left = `${rect.left + (rect.width - 60) / 2 + offsetX}px`;
+        ball.style.top = `${rect.top + (rect.height - 60) / 2}px`;
+        document.body.appendChild(ball);
+        return ball;
+    }
+
+    function spawnFlyingNumber(fromEl, value) {
+        const rect = fromEl.getBoundingClientRect();
+        const chip = document.createElement('div');
+        chip.className = 'num-chip';
+        chip.textContent = String(value);
+        chip.style.left = `${rect.left + (rect.width - 64) / 2}px`;
+        chip.style.top = `${rect.top + (rect.height - 64) / 2}px`;
+        document.body.appendChild(chip);
+        return chip;
+    }
+
+    function flyFromTo(el, targetEl, extraY = -90) {
+        const from = el.getBoundingClientRect();
+        const to = targetEl.getBoundingClientRect();
+        const dx = to.left + (to.width - from.width) / 2 - from.left;
+        const dy = to.top + (to.height - from.height) / 2 - from.top;
+        return el.animate([
+            { transform: 'translate(0, 0) scale(1)' },
+            { transform: `translate(${dx * 0.55}px, ${dy * 0.45 + extraY}px) scale(1.12)` },
+            { transform: `translate(${dx}px, ${dy}px) scale(1)` }
+        ], {
+            duration: 520,
+            easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+            fill: 'forwards'
+        }).finished;
+    }
+
+    async function flyIntoBox(ball, box) {
+        await flyFromTo(ball, box);
+        const landed = document.createElement('div');
+        landed.className = 'ball blue landed';
+        box.appendChild(landed);
+        ball.remove();
+    }
+
+    async function spillElement(el, lastBox, spillIndex) {
+        const from = el.getBoundingClientRect();
+        const target = lastBox.getBoundingClientRect();
+        const towardX = target.right - from.left - from.width / 2 + 10 + spillIndex * 18;
+        const towardY = target.top + 8 - from.top;
+        const fallX = towardX + 40 + spillIndex * 36 + Math.random() * 24;
+        const fallY = window.innerHeight - from.top + 40;
+
+        await el.animate([
+            { transform: 'translate(0, 0) rotate(0deg) scale(1)' },
+            { transform: `translate(${towardX}px, ${towardY - 24}px) rotate(25deg) scale(1.05)` }
+        ], {
+            duration: 380,
+            easing: 'ease-out',
+            fill: 'forwards'
+        }).finished;
+
+        lastBox.classList.add('shake');
+
+        await el.animate([
+            { transform: `translate(${towardX}px, ${towardY - 24}px) rotate(25deg) scale(1.05)` },
+            { transform: `translate(${fallX}px, ${fallY}px) rotate(420deg) scale(0.85)` }
+        ], {
+            duration: 780,
+            easing: 'cubic-bezier(0.55, 0.09, 0.68, 0.2)',
+            fill: 'forwards'
+        }).finished;
+
+        el.remove();
+    }
+
+    async function animateBalls(count, button) {
+        const empties = emptyBoxes();
+        const flyingBalls = [];
+        for (let i = 0; i < count; i++) {
+            flyingBalls.push(spawnFlyingBall(button, i, count));
+        }
+        await Promise.all(flyingBalls.map((ball, i) => wait(i * 150).then(() => {
+            if (i < empties.length) {
+                return flyIntoBox(ball, empties[i]);
+            }
+            const lastBox = boxesInOrder[boxesInOrder.length - 1];
+            return spillElement(ball, lastBox, i - empties.length);
+        })));
+    }
+
+    async function animateNumber(count, button, shouldSpill) {
+        refreshEquation();
+        const chip = spawnFlyingNumber(button, count);
+        const blank = equationEl.querySelector('.eq-blank') || equationEl;
+        if (shouldSpill) {
+            await spillElement(chip, blank, 0);
+            equationEl.classList.add('shake');
+            wait(450).then(() => equationEl.classList.remove('shake'));
+        } else {
+            await flyFromTo(chip, blank, -60);
+            chip.remove();
+            refreshEquation(count);
+        }
+        placeBlueBalls(Math.min(count, emptyBoxes().length));
+    }
+
+    async function onChoose(count, button) {
+        if (busy) return;
+        busy = true;
+        setChoicesEnabled(false);
+        emptyBoxes().forEach((box) => box.classList.remove('empty-hint'));
+
+        const needed = target - redCount;
+        const total = redCount + count;
+        const shouldSpill = total > target;
+
+        messageEl.innerHTML = showBalls
+            ? `あおだま を <strong>${count}</strong> こ いれるよ！`
+            : `<strong>${count}</strong> を たしてみるよ！`;
+
+        if (showBalls) {
+            await animateBalls(count, button);
+        } else {
+            await animateNumber(count, button, shouldSpill);
+        }
+
+        if (count === needed) {
+            solved = true;
+            messageEl.innerHTML = '<span style="color:#ff4081; font-size:32px;">🎉 大せいかい！ 🎉</span>';
+            refreshEquation(count);
+            choicesEl.classList.add('hidden');
+            nextBtn.classList.remove('hidden');
+            busy = false;
+            return;
+        }
+
+        if (shouldSpill) {
+            messageEl.innerHTML = `わあっ！ <strong>こぼれちゃった！</strong><br>${redCount} + ${count} は ${target} より おおいよ`;
+            refreshEquation(count);
+            framesContainer.querySelectorAll('.box').forEach((box) => box.classList.add('shake'));
+        } else {
+            emptyBoxes().forEach((box) => box.classList.add('empty-hint'));
+            messageEl.innerHTML = `まだ <strong>たりないよ！</strong><br>すきま が あるね`;
+            refreshEquation(count);
+        }
+
+        await wait(1600);
+        clearBlueBalls();
+        document.querySelectorAll('.ball.flying, .num-chip').forEach((el) => el.remove());
+        messageEl.innerHTML = promptMessage();
+        refreshEquation();
+        setChoicesEnabled(true);
+        busy = false;
+    }
+
+    document.querySelectorAll('.ctrl-btn[data-setting]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const on = btn.dataset.value === 'on';
+            if (btn.dataset.setting === 'grid') showGrid = on;
+            if (btn.dataset.setting === 'balls') showBalls = on;
+            applyDisplayMode();
+            if (!busy && !solved) {
+                messageEl.innerHTML = promptMessage();
+            }
+        });
+    });
+
+    nextBtn.addEventListener('click', initGame);
+    buildTargetButtons();
+    buildChoiceButtons();
+    initGame();
+</script>
+
+</body>
+</html>
