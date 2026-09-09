@@ -23,11 +23,11 @@
     }
     .layout {
         display: grid;
-        grid-template-columns: minmax(0, 680px) 176px;
+        grid-template-columns: 200px minmax(0, 680px) 176px;
         justify-content: center;
         align-items: start;
         gap: 16px;
-        max-width: 890px;
+        max-width: 1100px;
         margin: 0 auto;
     }
     .game-area {
@@ -91,7 +91,8 @@
         animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     .ball.flying,
-    .num-chip {
+    .num-chip,
+    .fruit-chip {
         position: fixed;
         margin: 0;
         z-index: 1000;
@@ -161,6 +162,20 @@
         40% { transform: translateX(8px) rotate(2deg); }
         60% { transform: translateX(-6px); }
         80% { transform: translateX(6px); }
+    }
+    @keyframes tree-bloom {
+        0%, 100% { transform: scale(1); }
+        40% { transform: scale(1.08); }
+        70% { transform: scale(0.96); }
+    }
+    @keyframes sparkle {
+        0%, 100% { filter: brightness(1); }
+        50% { filter: brightness(1.35); }
+    }
+    @keyframes stamp-pop {
+        0% { transform: scale(0); }
+        80% { transform: scale(1.2); }
+        100% { transform: scale(1); }
     }
 
     .equation {
@@ -257,6 +272,231 @@
         display: none !important;
     }
 
+    .grove {
+        background-color: #ffffff;
+        border-radius: 20px;
+        padding: 16px 12px 18px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    .grove-title {
+        font-size: 15px;
+        font-weight: bold;
+        color: #546e7a;
+        margin: 0 0 10px;
+        letter-spacing: 0.04em;
+    }
+    .harvest-meter {
+        font-size: 18px;
+        font-weight: bold;
+        color: #37474f;
+        margin-bottom: 10px;
+    }
+    .harvest-meter strong {
+        color: #e53935;
+        font-size: 22px;
+    }
+    .harvest-meter.done strong {
+        color: #43a047;
+    }
+    .sky {
+        position: relative;
+        height: 210px;
+        border-radius: 16px;
+        background: linear-gradient(#e3f2fd 0%, #fff8e1 78%, #c8e6c9 78%, #a5d6a7 100%);
+        overflow: hidden;
+        margin-bottom: 12px;
+    }
+    .sky.bloom .canopy,
+    .sky.bloom .sprout-leaf {
+        animation: tree-bloom 0.7s ease;
+    }
+    .bird {
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        font-size: 22px;
+        z-index: 3;
+        filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15));
+    }
+    .tree {
+        position: absolute;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .canopy {
+        position: relative;
+        width: 118px;
+        height: 96px;
+        background: radial-gradient(circle at 40% 40%, #81c784, #43a047 62%, #2e7d32);
+        border-radius: 50% 50% 46% 46%;
+        box-shadow: inset -10px -12px 0 rgba(0,0,0,0.08);
+        z-index: 2;
+        transform-origin: 50% 100%;
+    }
+    .trunk {
+        width: 16px;
+        height: 42px;
+        margin-top: -8px;
+        background: linear-gradient(90deg, #8d6e63, #6d4c41);
+        border-radius: 4px;
+        z-index: 1;
+    }
+    .sprout-leaf {
+        display: none;
+        width: 22px;
+        height: 28px;
+        background: #66bb6a;
+        border-radius: 80% 20% 80% 20%;
+        transform: rotate(-18deg);
+        margin-bottom: 2px;
+    }
+    .sky[data-stage="0"] .canopy {
+        width: 48px;
+        height: 40px;
+    }
+    .sky[data-stage="0"] .sprout-leaf { display: none; }
+    .sky[data-stage="0"] .trunk {
+        width: 8px;
+        height: 24px;
+        background: #7cb342;
+        border-radius: 6px;
+    }
+    .sky[data-stage="1"] .canopy {
+        width: 72px;
+        height: 60px;
+    }
+    .sky[data-stage="1"] .trunk {
+        width: 12px;
+        height: 32px;
+    }
+    .sky[data-stage="2"] .canopy {
+        width: 96px;
+        height: 78px;
+    }
+    .sky[data-stage="3"] .canopy {
+        width: 118px;
+        height: 96px;
+    }
+    .sky[data-stage="4"] .canopy {
+        width: 132px;
+        height: 108px;
+        background: radial-gradient(circle at 40% 40%, #66bb6a, #2e7d32 58%, #1b5e20);
+    }
+    .sky[data-stage="4"] .trunk {
+        width: 20px;
+        height: 48px;
+    }
+    .tree-apple {
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, #ff8a80, #e53935 58%, #b71c1c);
+        box-shadow: inset -2px -2px 0 rgba(0,0,0,0.12);
+        z-index: 4;
+    }
+    .tree-apple.golden {
+        background: radial-gradient(circle at 30% 30%, #fff59d, #ffd54f 45%, #ff8f00);
+        box-shadow: 0 0 8px rgba(255, 213, 79, 0.9);
+        animation: sparkle 1.2s ease-in-out infinite;
+    }
+    .fruit-chip {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, #ff8a80, #e53935 58%, #b71c1c);
+        box-shadow: 0 4px 10px rgba(229, 57, 53, 0.35);
+    }
+    .fruit-chip.golden {
+        background: radial-gradient(circle at 30% 30%, #fff59d, #ffd54f 45%, #ff8f00);
+        box-shadow: 0 0 12px rgba(255, 213, 79, 0.9);
+    }
+    .stamp-cal {
+        margin-bottom: 8px;
+    }
+    .stamp-month {
+        font-size: 16px;
+        font-weight: bold;
+        color: #1565c0;
+        margin: 0 0 6px;
+    }
+    .stamp-weekdays,
+    .stamp-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px;
+    }
+    .stamp-weekdays {
+        margin-bottom: 3px;
+    }
+    .stamp-wd {
+        font-size: 10px;
+        font-weight: bold;
+        color: #78909c;
+        line-height: 1.2;
+    }
+    .stamp-wd.sun { color: #ef5350; }
+    .stamp-wd.sat { color: #42a5f5; }
+    .stamp-day {
+        aspect-ratio: 1;
+        min-height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        border-radius: 6px;
+    }
+    .stamp-day.empty {
+        visibility: hidden;
+    }
+    .stamp-num {
+        font-size: 9px;
+        font-weight: bold;
+        color: #90a4ae;
+        line-height: 1;
+        position: relative;
+        z-index: 1;
+    }
+    .stamp-day.future .stamp-num {
+        color: #cfd8dc;
+    }
+    .stamp-day.today {
+        box-shadow: inset 0 0 0 2px #64b5f6;
+        background: #e3f2fd;
+    }
+    .stamp-day.today .stamp-num {
+        color: #1565c0;
+    }
+    .stamp-mark {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, #ff8a80, #e53935 58%, #b71c1c);
+    }
+    .stamp-mark.just {
+        animation: stamp-pop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .stamp-day.filled .stamp-num {
+        color: #fff;
+        text-shadow: 0 1px 1px rgba(0,0,0,0.25);
+    }
+    .streak-caption {
+        margin: 0;
+        font-size: 16px;
+        font-weight: bold;
+        color: #37474f;
+    }
+    .streak-caption strong {
+        color: #ff4081;
+        font-size: 20px;
+    }
+
     .controls {
         background-color: #ffffff;
         border-radius: 20px;
@@ -338,9 +578,28 @@
         opacity: 0.85;
     }
 
+    @media (max-width: 1000px) {
+        .layout {
+            grid-template-columns: minmax(0, 680px) 176px;
+        }
+        .grove {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            align-items: center;
+            gap: 12px 16px;
+        }
+        .grove-title { grid-column: 1 / -1; margin-bottom: 0; }
+        .sky { margin-bottom: 0; }
+        .grove-side { text-align: center; }
+    }
     @media (max-width: 760px) {
         .layout {
             grid-template-columns: 1fr;
+        }
+        .grove {
+            grid-column: auto;
+            display: block;
         }
         .controls {
             display: grid;
@@ -365,6 +624,23 @@
     <h1 id="game-title">🍎 5 を つくろう！ 🍏</h1>
 
     <div class="layout">
+        <aside class="grove" aria-label="きょうのしゅうかく">
+            <p class="grove-title">ぼくのき</p>
+            <div class="sky" id="tree-sky" data-stage="0">
+                <div class="bird hidden" id="tree-bird">🐦</div>
+                <div class="tree">
+                    <div class="sprout-leaf"></div>
+                    <div class="canopy" id="canopy"></div>
+                    <div class="trunk"></div>
+                </div>
+            </div>
+            <div class="grove-side">
+                <div class="harvest-meter" id="harvest-meter">きょう <strong>0</strong> / 10</div>
+                <div class="stamp-cal" id="stamp-cal"></div>
+                <p class="streak-caption" id="streak-caption">れんぞく <strong>0</strong> 日</p>
+            </div>
+        </aside>
+
         <div class="game-area" id="game-area">
             <div id="message" class="message">あかだま が あるよ。<br>あおだま は いくつ いるかな？</div>
 
@@ -404,6 +680,17 @@
     </div>
 
 <script>
+    const HARVEST_GOAL = 10;
+    const GOLDEN_CHANCE = 1 / 12;
+    const STORAGE_KEY = 'factorization-game-v1';
+    const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+    const APPLE_SPOTS = [
+        { x: 18, y: 42 }, { x: 48, y: 18 }, { x: 74, y: 38 },
+        { x: 32, y: 58 }, { x: 62, y: 52 }, { x: 12, y: 62 },
+        { x: 82, y: 22 }, { x: 40, y: 32 }, { x: 58, y: 8 },
+        { x: 24, y: 22 }
+    ];
+
     const gameArea = document.getElementById('game-area');
     const framesContainer = document.getElementById('frames');
     const messageEl = document.getElementById('message');
@@ -415,6 +702,12 @@
 
     const gameTitle = document.getElementById('game-title');
     const targetGrid = document.getElementById('target-grid');
+    const treeSky = document.getElementById('tree-sky');
+    const canopy = document.getElementById('canopy');
+    const treeBird = document.getElementById('tree-bird');
+    const harvestMeter = document.getElementById('harvest-meter');
+    const stampCal = document.getElementById('stamp-cal');
+    const streakCaption = document.getElementById('streak-caption');
 
     let target = 5;
     let redCount = 0;
@@ -423,9 +716,235 @@
     let showGrid = true;
     let showBalls = true;
     let boxesInOrder = [];
+    let remainingQueue = [];
+    let resumeCurrent = false;
+    let apples = [];
+    let harvestDone = false;
+    let streak = 0;
+    let lastHarvestDate = '';
+    let stampDates = [];
+    let justStamped = false;
 
     function wait(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function dateKey(date = new Date()) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    function shiftDateKey(days) {
+        const date = new Date();
+        date.setDate(date.getDate() + days);
+        return dateKey(date);
+    }
+
+    function shuffle(list) {
+        const arr = list.slice();
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function buildFairQueue(goal, length, avoidStart = 0) {
+        const opts = [];
+        for (let n = 1; n < goal; n++) opts.push(n);
+        if (!opts.length) return Array(length).fill(1);
+
+        const counts = {};
+        opts.forEach((n) => { counts[n] = 0; });
+        const base = Math.floor(length / opts.length);
+        let extra = length % opts.length;
+        shuffle(opts).forEach((n) => {
+            counts[n] = base + (extra > 0 ? 1 : 0);
+            if (extra > 0) extra -= 1;
+        });
+
+        const result = [];
+        let last = avoidStart;
+        for (let i = 0; i < length; i++) {
+            const remaining = opts.filter((n) => counts[n] > 0);
+            let candidates = remaining.filter((n) => n !== last);
+            if (!candidates.length) candidates = remaining;
+            const maxLeft = Math.max(...candidates.map((n) => counts[n]));
+            candidates = candidates.filter((n) => counts[n] === maxLeft);
+            const pick = candidates[Math.floor(Math.random() * candidates.length)];
+            result.push(pick);
+            counts[pick] -= 1;
+            last = pick;
+        }
+        return result;
+    }
+
+    function loadState() {
+        let saved = null;
+        try {
+            saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+        } catch (err) {
+            saved = null;
+        }
+        const today = dateKey();
+        const yesterday = shiftDateKey(-1);
+
+        streak = Number(saved && saved.streak) || 0;
+        lastHarvestDate = (saved && saved.lastHarvestDate) || '';
+        stampDates = Array.isArray(saved && saved.stampDates) ? saved.stampDates.slice(-120) : [];
+        if (saved && Number(saved.target) >= 2 && Number(saved.target) <= 10) {
+            target = Number(saved.target);
+        }
+
+        if (lastHarvestDate !== today && lastHarvestDate !== yesterday) {
+            streak = 0;
+        }
+
+        if (saved && saved.playDate === today) {
+            apples = Array.isArray(saved.apples) ? saved.apples : [];
+            harvestDone = Boolean(saved.harvestDone);
+            if (Number(saved.currentRed) >= 1 && Number(saved.currentRed) < target) {
+                redCount = Number(saved.currentRed);
+                remainingQueue = Array.isArray(saved.remainingQueue) ? saved.remainingQueue : [];
+                resumeCurrent = true;
+            }
+        } else {
+            apples = [];
+            harvestDone = false;
+            remainingQueue = [];
+            resumeCurrent = false;
+        }
+    }
+
+    function saveState() {
+        const payload = {
+            playDate: dateKey(),
+            target,
+            currentRed: redCount,
+            remainingQueue,
+            apples,
+            harvestDone,
+            streak,
+            lastHarvestDate,
+            stampDates
+        };
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        } catch (err) {
+            /* ignore quota / private mode */
+        }
+    }
+
+    function treeStage() {
+        if (streak >= 14) return 4;
+        if (streak >= 7) return 3;
+        if (streak >= 3) return 2;
+        if (streak >= 1) return 1;
+        return 0;
+    }
+
+    function renderTree() {
+        treeSky.dataset.stage = String(treeStage());
+        treeBird.classList.toggle('hidden', streak < 7);
+        canopy.querySelectorAll('.tree-apple').forEach((el) => el.remove());
+        apples.slice(0, HARVEST_GOAL).forEach((apple, i) => {
+            const spot = APPLE_SPOTS[i];
+            const el = document.createElement('div');
+            el.className = 'tree-apple' + (apple.golden ? ' golden' : '');
+            el.style.left = `${spot.x}%`;
+            el.style.top = `${spot.y}%`;
+            canopy.appendChild(el);
+        });
+    }
+
+    function renderHarvestMeter() {
+        const n = Math.min(apples.length, HARVEST_GOAL);
+        harvestMeter.classList.toggle('done', harvestDone);
+        harvestMeter.innerHTML = harvestDone
+            ? `きょうのしゅうかく <strong>かんせい</strong>`
+            : `きょう <strong>${n}</strong> / ${HARVEST_GOAL}`;
+    }
+
+    function renderStamps() {
+        stampCal.innerHTML = '';
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const today = dateKey(now);
+        const stamped = new Set(stampDates);
+        const firstWeekday = new Date(year, month, 1).getDay();
+        const lastDate = new Date(year, month + 1, 0).getDate();
+
+        const monthEl = document.createElement('p');
+        monthEl.className = 'stamp-month';
+        monthEl.textContent = `${month + 1}がつ`;
+        stampCal.appendChild(monthEl);
+
+        const weekdays = document.createElement('div');
+        weekdays.className = 'stamp-weekdays';
+        WEEKDAYS.forEach((label, i) => {
+            const wd = document.createElement('span');
+            wd.className = 'stamp-wd' + (i === 0 ? ' sun' : i === 6 ? ' sat' : '');
+            wd.textContent = label;
+            weekdays.appendChild(wd);
+        });
+        stampCal.appendChild(weekdays);
+
+        const grid = document.createElement('div');
+        grid.className = 'stamp-grid';
+        for (let i = 0; i < firstWeekday; i++) {
+            const empty = document.createElement('div');
+            empty.className = 'stamp-day empty';
+            grid.appendChild(empty);
+        }
+        for (let d = 1; d <= lastDate; d++) {
+            const date = new Date(year, month, d);
+            const key = dateKey(date);
+            const day = document.createElement('div');
+            const isToday = key === today;
+            const isFuture = date > now && !isToday;
+            const isFilled = stamped.has(key);
+            day.className = 'stamp-day'
+                + (isToday ? ' today' : '')
+                + (isFuture ? ' future' : '')
+                + (isFilled ? ' filled' : '');
+            const num = document.createElement('span');
+            num.className = 'stamp-num';
+            num.textContent = String(d);
+            day.appendChild(num);
+            if (isFilled) {
+                const mark = document.createElement('div');
+                mark.className = 'stamp-mark' + (justStamped && isToday ? ' just' : '');
+                day.appendChild(mark);
+            }
+            grid.appendChild(day);
+        }
+        stampCal.appendChild(grid);
+        justStamped = false;
+        streakCaption.innerHTML = `れんぞく <strong>${streak}</strong> 日`;
+    }
+
+    function refreshOrchard() {
+        renderTree();
+        renderHarvestMeter();
+        renderStamps();
+    }
+
+    function nextAppleSlot() {
+        const index = Math.min(apples.length, HARVEST_GOAL - 1);
+        let slot = canopy.querySelectorAll('.tree-apple')[index];
+        if (!slot) {
+            const spot = APPLE_SPOTS[index] || APPLE_SPOTS[0];
+            slot = document.createElement('div');
+            slot.className = 'tree-apple';
+            slot.style.left = `${spot.x}%`;
+            slot.style.top = `${spot.y}%`;
+            slot.style.visibility = 'hidden';
+            canopy.appendChild(slot);
+        }
+        return slot;
     }
 
     function emptyBoxes() {
@@ -511,6 +1030,8 @@
             btn.addEventListener('click', () => {
                 if (target === n) return;
                 target = n;
+                remainingQueue = [];
+                resumeCurrent = false;
                 buildChoiceButtons();
                 initGame();
             });
@@ -565,10 +1086,28 @@
         });
     }
 
+    function refillQueue() {
+        const length = harvestDone
+            ? HARVEST_GOAL
+            : Math.max(HARVEST_GOAL - apples.length, 1);
+        remainingQueue = buildFairQueue(target, length, redCount);
+    }
+
+    function drawNextQuestion() {
+        if (resumeCurrent && redCount >= 1 && redCount < target) {
+            resumeCurrent = false;
+            return;
+        }
+        resumeCurrent = false;
+        if (!remainingQueue.length) refillQueue();
+        redCount = remainingQueue.shift();
+        saveState();
+    }
+
     function initGame() {
         busy = false;
         solved = false;
-        redCount = Math.floor(Math.random() * (target - 1)) + 1;
+        drawNextQuestion();
 
         messageEl.innerHTML = promptMessage();
         nextBtn.classList.add('hidden');
@@ -686,6 +1225,53 @@
         placeBlueBalls(Math.min(count, emptyBoxes().length));
     }
 
+    function fruitStartEl() {
+        const blues = framesContainer.querySelectorAll('.ball.blue');
+        if (showBalls && blues.length) return blues[blues.length - 1];
+        return equationEl.querySelector('.eq-blue') || equationEl;
+    }
+
+    async function animateFruitToTree(golden) {
+        const fromEl = fruitStartEl();
+        const slot = nextAppleSlot();
+        const rect = fromEl.getBoundingClientRect();
+        const chip = document.createElement('div');
+        chip.className = 'fruit-chip' + (golden ? ' golden' : '');
+        chip.style.left = `${rect.left + (rect.width - 36) / 2}px`;
+        chip.style.top = `${rect.top + (rect.height - 36) / 2}px`;
+        document.body.appendChild(chip);
+        await flyFromTo(chip, slot, -70);
+        chip.remove();
+        slot.remove();
+    }
+
+    function collectApple(golden) {
+        if (apples.length < HARVEST_GOAL) {
+            apples.push({ golden });
+            return;
+        }
+        if (golden) {
+            const plain = apples.findIndex((apple) => !apple.golden);
+            if (plain >= 0) apples[plain].golden = true;
+        }
+    }
+
+    function completeHarvest() {
+        const today = dateKey();
+        const yesterday = shiftDateKey(-1);
+        harvestDone = true;
+        if (lastHarvestDate !== today) {
+            streak = lastHarvestDate === yesterday ? streak + 1 : 1;
+            lastHarvestDate = today;
+            if (!stampDates.includes(today)) stampDates.push(today);
+            justStamped = true;
+        }
+        treeSky.classList.remove('bloom');
+        void treeSky.offsetWidth;
+        treeSky.classList.add('bloom');
+        wait(800).then(() => treeSky.classList.remove('bloom'));
+    }
+
     async function onChoose(count, button) {
         if (busy) return;
         busy = true;
@@ -708,8 +1294,27 @@
 
         if (count === needed) {
             solved = true;
-            messageEl.innerHTML = '<span style="color:#ff4081; font-size:32px;">🎉 大せいかい！ 🎉</span>';
+            const golden = Math.random() < GOLDEN_CHANCE;
+            const wasComplete = harvestDone;
+            await animateFruitToTree(golden);
+            collectApple(golden);
+            if (!wasComplete && apples.length >= HARVEST_GOAL) {
+                completeHarvest();
+            }
+            saveState();
+            refreshOrchard();
             refreshEquation(count);
+
+            if (!wasComplete && harvestDone) {
+                messageEl.innerHTML = golden
+                    ? '<span style="color:#ff4081; font-size:32px;">🎉 しゅうかく かんせい！ 🎉</span><br>きんのりんご も なったよ！'
+                    : '<span style="color:#ff4081; font-size:32px;">🎉 きょうのしゅうかく かんせい！ 🎉</span>';
+            } else if (golden) {
+                messageEl.innerHTML = '<span style="color:#ff8f00; font-size:32px;">✨ きんのりんご！ ✨</span>';
+            } else {
+                messageEl.innerHTML = '<span style="color:#ff4081; font-size:32px;">🎉 大せいかい！ 🎉</span>';
+            }
+
             choicesEl.classList.add('hidden');
             nextBtn.classList.remove('hidden');
             busy = false;
@@ -748,6 +1353,8 @@
     });
 
     nextBtn.addEventListener('click', initGame);
+    loadState();
+    refreshOrchard();
     buildTargetButtons();
     buildChoiceButtons();
     initGame();
